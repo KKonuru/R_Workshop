@@ -1,0 +1,27 @@
+---
+title: "R_workshop_2023"
+output: html_document
+date: "2023-10-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+#First we will get the dataset and load it into a dataframe
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+kart <- read_csv("bodies_karts.csv")
+```
+
+```{r}
+kart.head()
+
+```
