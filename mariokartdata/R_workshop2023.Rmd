@@ -1,0 +1,242 @@
+---
+title: "R_workshop_2023"
+output: html_document
+date: "2023-10-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+#First download libraries
+
+```{r}
+library(tidyverse)
+library(readr)
+library(shiny)
+```
+
+```{r}
+# --- Vectors ---
+
+# Creating vectors
+numeric_vector <- c(1, 2, 3, 4, 5)
+print(numeric_vector)
+
+character_vector <- c("apple", "banana", "cherry")
+print(character_vector)
+
+logical_vector <- c(TRUE, FALSE, TRUE)
+print(logical_vector)
+
+# Vector addition
+print(numeric_vector + 2)
+
+# Logical operations
+print(logical_vector & c(FALSE, TRUE, TRUE))
+```
+
+```{r}
+# --- Data Manipulation and Cleaning using mtcars dataset ---
+
+data(mtcars)
+
+# Filtering Rows (cars with more than 200 hp)
+filtered_cars <- mtcars %>% filter(hp > 200)
+print(head(filtered_cars))
+
+# Selecting Columns (mpg and hp columns only)
+selected_data <- mtcars %>% select(mpg, hp)
+print(head(selected_data))
+
+# Creating New Columns (miles per gallon per cylinder)
+mtcars_with_new_column <- mtcars %>% mutate(mpg_per_cyl = mpg/cyl)
+print(head(mtcars_with_new_column))
+```
+
+```{r}
+# Renaming Columns (rename mpg to miles_per_gallon)
+renamed_data <- mtcars %>% rename(miles_per_gallon = mpg)
+print(head(renamed_data))
+
+# Handling Missing Data (for demonstration, let's assume some mpg values are NA)
+mtcars$mpg[c(5,10,15)] <- NA
+print(head(mtcars))
+
+# Removing rows with NA values
+cleaned_data <- mtcars %>% drop_na()
+print(head(cleaned_data))
+```
+
+```{r}
+# Filling NA values with a placeholder (e.g., average mpg)
+filled_data <- mtcars %>% replace_na(list(mpg = mean(mtcars$mpg, na.rm = TRUE)))
+print(head(filled_data))
+
+# Grouping and Summarizing Data (average mpg by number of cylinders)
+summary_data <- mtcars %>% 
+  group_by(cyl) %>% 
+  summarize(mean_mpg = mean(mpg, na.rm = TRUE))
+print(summary_data)
+
+# Sorting Data (by mpg)
+sorted_data <- mtcars %>% arrange(desc(mpg))
+print(head(sorted_data))
+
+# Removing Duplicates (in mtcars all rows are unique, but this is how you'd do it)
+unique_data <- mtcars %>% distinct()
+print(head(unique_data))
+```
+
+```{r}
+# Clean out workspace objects
+
+rm(list = ls())
+```
+
+```{r}
+kart <- read_csv("karts.csv",show_col_types = FALSE)
+
+# Alternatively..
+
+#karts_filepath = file.choose()
+#kart <- read_csv(karts_filepath,show_col_types = FALSE)
+```
+
+```{r}
+head(kart)
+colnames(kart)
+
+# 1. Histogram of Kart Weights
+ggplot(kart, aes(Weight)) + geom_histogram()
+
+# 2. Boxplot of Acceleration by Body
+ggplot(kart, aes(Body, Acceleration)) + geom_boxplot()
+
+# 3. Scatter Plot of Ground Speed vs Air Speed
+ggplot(kart, aes(`Ground Speed`, `Air Speed`, color = Body)) + geom_point()
+
+# 4. Correlation Plot
+corrplot::corrplot(cor(select(kart, -Body)))
+
+# 5. Bar Plot of Average Ground Speed by Body
+kart %>% group_by(Body) %>% summarise(avg_speed = mean(`Ground Speed`)) %>%
+  ggplot(aes(Body, avg_speed)) + geom_bar(stat = "identity")
+
+```
+
+```{r}
+# ANOVA
+anova_result <- aov(`Ground Speed` ~ Body, data = kart)
+summary(anova_result)
+
+# Kruskal-Wallis Test
+kruskal_result <- kruskal.test(`Ground Speed` ~ Body, data = kart)
+kruskal_result
+
+# Expected Output:
+
+# ANOVA Table:
+# - Df (Body): 39. Degrees of Freedom
+# - Sum Sq (Body): 82.78. Sum of Squares
+# - Mean Sq (Body): 2.122. Average squared differences between groups.
+
+# Kruskal-Wallis Test:
+# - Tests if there are significant differences in 'Ground Speed' across different 'Body' types.
+# - Test statistic (chi-squared): 39.
+# - Degrees of Freedom: 39 (suggesting 40 groups in 'Body').
+# - p-value: 0.4699. No statistically significant difference between 'Body' groups at the 0.05 level.
+```
+
+```{r}
+# Example t-test, test if 10 cards drawn from deck can accurately give estimate of overall card average
+
+# 10 drawn cards from the deck
+# Numbers: 2 to 10, 11 for Jack, 12 for Queen, 13 for King, 1 for Ace
+drawn_cards <- c(10, 3, 11, 5, 2, 4, 7, 8, 9, 10)
+
+# One-sample t-test to check if the average value of drawn cards is different from 6.5
+# mu = 6.5 is the average value if all cards are equally likely
+result <- t.test(drawn_cards, mu = 6.5)
+result
+
+# Calculate 95% confidence interval for the average of drawn cards
+conf_interval <- t.test(drawn_cards, conf.level = 0.99)$conf.int
+conf_interval
+
+```
+
+```{r}
+
+# Observed counts of each suit from a card draw
+# Assuming: Hearts, Diamonds, Clubs, and Spades
+observed_suits <- c(4, 2, 11, 14)
+
+# Chi-squared test to check if the suits from the drawn cards are uniformly distributed
+chi_result <- chisq.test(observed_suits)
+chi_result
+
+# Names of the suits
+suits_names <- c("Hearts", "Diamonds", "Clubs", "Spades")
+
+# Create a barplot of the observed suits
+barplot(observed_suits, names.arg = suits_names, main = "Observed Suit Counts", ylab = "Counts", col = rainbow(4))
+
+```
+
+```{r}
+
+# Shiny is a library that makes it simple to create interactive user interfaces in R and Python, can be usually for many different purposes
+
+# Example using our deck of cards and a t-test for card averages
+
+# UI (User Interface) of the Shiny App
+ui <- fluidPage(
+  titlePanel("Card Draw Analysis"),
+  
+  # Sidebar layout for input controls and displaying output
+  sidebarLayout(
+    sidebarPanel(
+      # Numeric input for number of cards drawn
+      numericInput("n", "Number of cards drawn:", 10, min = 1, max = 52),
+      
+      # Numeric input for expected mean
+      numericInput("mean", "Expected mean:", 6.5),
+      
+      # Action button to trigger the t-test
+      actionButton("go", "Run t-test")
+    ),
+    mainPanel(
+      # Display the result of the t-test
+      verbatimTextOutput("result")
+    )
+  )
+)
+
+# Server logic for the Shiny App
+server <- function(input, output) {
+  
+  # Perform actions when the "Run t-test" button is clicked
+  observeEvent(input$go, {
+    
+    # Randomly sample card values based on the number of cards drawn
+    drawn_samples <- sample(1:13, input$n, replace = TRUE)
+    
+    # Run a t-test on the drawn samples
+    test_result <- t.test(drawn_samples, mu = input$mean)
+    
+    # Display the test result
+    output$result <- renderPrint({ test_result })
+  })
+}
+
+# Launch the Shiny App
+# NOTE: This will only run interactively and won't show in a knit document.
+if(interactive()){
+  shinyApp(ui, server)
+}
+
+```
