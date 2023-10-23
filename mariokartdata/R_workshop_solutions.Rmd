@@ -1,0 +1,116 @@
+---
+title: "R_workshop_2023"
+output: html_document
+date: "2023-10-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+## Open tidyverse library
+```{r}
+library(tidyverse)
+```
+
+
+# First we will get the dataset and load it into a dataframe
+
+```{r}
+kart <- read.csv("karts.csv")
+```
+ 
+## Lets examine the first 6 lines of the code
+```{r}
+head(kart)
+```
+
+
+# 1.Analysis of our data
+
+  a. How many karts are in the dataset?
+```{r}
+nrow(kart)
+```
+
+  b. How many columns are in the dataset?
+```{r}
+#Solution for students to fill
+ncol(kart)
+```
+
+
+  c. What are the column names?
+```{r}
+names(kart)
+```
+
+  d. Get the values stored in the acceleration column
+```{r}
+#Solution
+kart$Acceleration
+```
+
+  e. Rename the column Body to Kart
+```{r}
+names(kart)[1] <- "Kart"
+```
+
+  f. Print out the first six rows from greatest to least acceleration
+```{r}
+kart <- arrange(kart, desc(Acceleration))
+head(kart)
+```
+  
+  g. Get the value in the third row and the fourth column
+```{r}
+#Solution for student
+kart[3,4]
+```
+
+  h. Select only the rows that have a Acceleration of 5 and only print the Weight and Acceleration
+```{r}
+kart[kart$Acceleration==5,c("Weight", "Acceleration")]
+```
+  
+# 2. Generating graphs using our dataset
+  
+  a. Generate a bar graph of the number of karts with each possible acceleration
+```{r}
+acc_counts <- as.data.frame(table(kart$Acceleration))
+
+colnames(acc_counts) <- c("Acceleration", "Count")
+
+ggplot(acc_counts, aes(x = Acceleration, y = Count)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Number of Karts by Acceleration",
+       x = "Acceleration",
+       y = "Count") +
+  theme_minimal()
+```
+  
+  
+  b. Make a similar bar graph for the number of karts for each weight category
+```{r}
+#Solution
+weight_counts <- as.data.frame(table(kart$Weight))
+
+# Rename the columns for clarity
+colnames(weight_counts) <- c("Weight", "Count")
+
+# Create a bar graph using ggplot2
+ggplot(weight_counts, aes(x = Weight, y = Count)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Number of Karts by Weight",
+       x = "Weight",
+       y = "Count") +
+  theme_minimal()
+```
+
+
+
+# 3. Statistical tests
+
+
+
